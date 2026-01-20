@@ -1,0 +1,11 @@
+{
+    "name" : "no-space-spoilables",
+    "author" : "Radonier",
+    "title" : "No Spoilage in Space",
+    "version" : "0.1.0",
+    "factorio_version": "2.0",
+    "dependencies": [
+        "base >= 2.0",
+        "space-age"
+    ]
+}
