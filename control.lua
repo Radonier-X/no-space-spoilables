@@ -27,6 +27,8 @@ local function process_space_platforms()
     -- Platforms are categorized by the Force (Team) they belong to
     for _, force in pairs(game.forces) do
         for _, platform in pairs(force.platforms) do
+
+            -- TO DO: Implement a electric energy interface check
             
             -- The 'hub' is the master entity for any platform and inventory
             local hub = platform.hub
