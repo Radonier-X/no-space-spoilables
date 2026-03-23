@@ -58,7 +58,7 @@ end
 --- @param inventory LuaInventory? The inventory (Cargo Bay/Hub) to process
 local function freeze_inventory(inventory)
     
-    if not inventory or not inventory.valid then return 0 end
+    if not inventory or not inventory.valid then return end
     
     for i = 1, #inventory do
         local stack = inventory[i]
