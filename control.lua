@@ -121,11 +121,11 @@ local function process_space_platforms(force)
             power_consumption = (spoilable_count * POWER_PER_SLOT) / 60 
             interface.power_usage = power_consumption
             interface.input_flow_limit = power_consumption
-            interface.electric_buffer_size = power_consumption
+            interface.electric_buffer_size = power_consumption*1.1
 
             -- 3. Check if we have enough "juice" in the buffer
             -- If the buffer is empty, the platform is out of power
-            if interface.energy > (interface.power_usage) then
+            if interface.energy >= (interface.power_usage) then
                 freeze_inventory(inv_main)
                 freeze_inventory(inv_trash)
             end

@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.3
+Date: 27. 06. 2026
+  Bugfixes:
+    - Fixed main update loop not actiavting due to buffer capacity
+    - Fixed setting technology transition removing the prototype
+---------------------------------------------------------------------------------------------------
 Version: 1.0.2
 Date: 27. 06. 2026
   Bugfixes:

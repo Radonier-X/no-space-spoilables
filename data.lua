@@ -37,8 +37,35 @@ local RESEARCH_REQUIREMENT_LIST =
       {"cryogenic-science-pack",1}
     },
     time = 60
+  },
+  ["none"] = {
+    count = 10,
+    ingredients =
+    {
+      {"space-science-pack", 1}
+    },
+    time = 10
   }
 }
+
+local PREREQUISITES = {}
+if not (PREREQUISITE_TECH == "none") then
+  PREREQUISITES = {PREREQUISITE_TECH}
+end
+
+data:extend({
+  {
+  type = "technology",
+  name = "space-platfrom-refrigeration",
+  icon = "__no-space-spoilables__/graphics/space-platform-freezing.png",
+  icon_size = 256,
+---@diagnostic disable-next-line: assign-type-mismatch
+  prerequisites = PREREQUISITES,
+  unit = RESEARCH_REQUIREMENT_LIST[PREREQUISITE_TECH],
+  essential = false,
+  hidden = (PREREQUISITE_TECH == "none")
+}
+})
 
 
 data:extend({
@@ -62,17 +89,5 @@ data:extend({
 
 })
 
-if not (settings.startup["technology-required"].value == "none") then 
-  data:extend({
-    {
-    type = "technology",
-    name = "space-platfrom-refrigeration",
-    icon = "__no-space-spoilables__/graphics/space-platform-freezing.png",
-    icon_size = 256,
----@diagnostic disable-next-line: assign-type-mismatch
-    prerequisites = {PREREQUISITE_TECH},
-    unit = RESEARCH_REQUIREMENT_LIST[PREREQUISITE_TECH],
-    essential = false
-  }
-  })
-end
+
+
