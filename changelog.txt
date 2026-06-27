@@ -1,0 +1,18 @@
+---------------------------------------------------------------------------------------------------
+Version: 1.0.2
+Date: 27. 06. 2026
+  Bugfixes:
+    - Fixed mod portal?
+    - Locale file name changed to fit mod name
+---------------------------------------------------------------------------------------------------
+Version: 1.0.1
+Date: 27. 06. 2026
+  Bugfixes:
+    - Fixed version error in info.json. Mod only works for Factorio version 2.1
+---------------------------------------------------------------------------------------------------
+Version: 1.0.0
+Date: 27. 06. 2026
+  Major Features:
+    - Initial release.
+    - Added configurable spoilage resetting to space hub
+    - Added technologies and settings for said hub
