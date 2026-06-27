@@ -1,11 +1,52 @@
 local BASE_POWER_USAGE = "50kW" -- Minimum power to keep the system "on"
+local PREREQUISITE_TECH = settings.startup["technology-required"].value
+local RESEARCH_REQUIREMENT_LIST = 
+{
+  ["space-platform"] = {
+    count = 1000,
+    ingredients =
+    {
+      {"automation-science-pack", 1},
+      {"logistic-science-pack", 1},
+      {"chemical-science-pack", 1},
+      {"space-science-pack", 1}
+    },
+    time = 60
+  },
+  ["agricultural-science-pack"] = {
+    count = 1000,
+    ingredients =
+    {
+      {"automation-science-pack", 1},
+      {"logistic-science-pack", 1},
+      {"chemical-science-pack", 1},
+      {"space-science-pack", 1},
+      {"agricultural-science-pack",1}
+    },
+    time = 60
+  },
+  ["cryogenic-science-pack"] = {
+    count = 1000,
+    ingredients =
+    {
+      {"automation-science-pack", 1},
+      {"logistic-science-pack", 1},
+      {"chemical-science-pack", 1},
+      {"space-science-pack", 1},
+      {"agricultural-science-pack",1},
+      {"cryogenic-science-pack",1}
+    },
+    time = 60
+  }
+}
+
 
 data:extend({
   {
     type = "electric-energy-interface",
     name = "space-refrigeration-interface",
-    icon = "__base__/graphics/icons/accumulator.png",
-    icon_size = 64,
+    icon = "__no-space-spoilables__/graphics/space-platform-freezing-icon.png",
+    icon_size = 256,
     flags = { "not-blueprintable", "not-deconstructable", "placeable-off-grid"},
     hidden = true,
     max_health = 1,
@@ -14,10 +55,24 @@ data:extend({
     energy_source = {
       type = "electric",
       usage_priority = "secondary-input",
-      -- Large buffer to allow for scaling drain
-      buffer_capacity = "10MJ", 
-      input_flow_limit = "5MW",
-      render_no_power_icon = false
+      render_no_power_icon = false,
+      output_flow_limit = "0W"
     }
   }
+
 })
+
+if not (settings.startup["technology-required"].value == "none") then 
+  data:extend({
+    {
+    type = "technology",
+    name = "space-platfrom-refrigeration",
+    icon = "__no-space-spoilables__/graphics/space-platform-freezing.png",
+    icon_size = 256,
+---@diagnostic disable-next-line: assign-type-mismatch
+    prerequisites = {PREREQUISITE_TECH},
+    unit = RESEARCH_REQUIREMENT_LIST[PREREQUISITE_TECH],
+    essential = false
+  }
+  })
+end
