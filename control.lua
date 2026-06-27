@@ -1,4 +1,4 @@
--- Init
+--#region Init
 
 script.on_init(function()
     storage.platform_interfaces = storage.platform_interfaces or {}
@@ -8,6 +8,9 @@ script.on_configuration_changed(function()
     storage.platform_interfaces = storage.platform_interfaces or {}
 end)
 
+--#endregion
+
+--#region Functions
 
 -- Configuration:
 -- Frequency of the "freeze" pulse
@@ -123,7 +126,7 @@ local function process_space_platforms(force)
             interface.input_flow_limit = power_consumption
             interface.electric_buffer_size = power_consumption*1.1
 
-            -- 3. Check if we have enough "juice" in the buffer
+            -- 3. Check if we have enough energy in the buffer
             -- If the buffer is empty, the platform is out of power
             if interface.energy >= (interface.power_usage) then
                 freeze_inventory(inv_main)
@@ -135,6 +138,10 @@ local function process_space_platforms(force)
 
     end
 end
+
+--#endregion
+
+--#region Script handlers
 
 -- Register the logic to run every nth tick
 script.on_nth_tick(TICK_INTERVAL, function ()
@@ -148,3 +155,5 @@ script.on_nth_tick(TICK_INTERVAL, function ()
         end
     end
 end)
+
+--#endregion

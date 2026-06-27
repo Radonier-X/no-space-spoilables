@@ -67,7 +67,6 @@ data:extend({
 }
 })
 
-
 data:extend({
   {
     type = "electric-energy-interface",
@@ -88,6 +87,3 @@ data:extend({
   }
 
 })
-
-
-
