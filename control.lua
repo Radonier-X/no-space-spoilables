@@ -19,7 +19,7 @@ local INTERFACE_NAME = "space-refrigeration-interface"
 local POWER_PER_SLOT = settings.startup["power-per-stack"].value
 local BASE_POWER_USAGE = 50000
 
-
+-- Creates the interface on the surface of the platform and caches it for future uses
 local function get_or_create_interface(platform)
     local platform_index = platform.index
     local cached_entity = storage.platform_interfaces[platform_index]
@@ -41,6 +41,7 @@ local function get_or_create_interface(platform)
         limit = 1
     }[1]
 
+    -- Creates the interface for the platfrom if it doesn't exist
     if not interface then
         interface = surface.create_entity{
             name = INTERFACE_NAME,
@@ -57,30 +58,25 @@ local function get_or_create_interface(platform)
     return interface
 end
 
---- Core Logic: Resets the spoilage timer for all items in a given inventory
---- @param inventory LuaInventory? The inventory (Cargo Bay/Hub) to process
-local function freeze_inventory(inventory)
-    
-    if not inventory or not inventory.valid then return end
-    
-    for i = 1, #inventory do
-        local stack = inventory[i]
+-- Resets the time for the stack
+local function freeze_stack(stack)
+    -- Resets time upto the maximum permissable by the item
+    stack.spoil_tick = game.tick + math.min(stack.prototype.get_spoil_ticks(stack.quality),
+                                            (stack.spoil_tick - game.tick) + TICK_INTERVAL)
+end
 
-        -- valid_for_read: slot is not empty
-        -- spoil_percent > 0: item is actually capable of spoiling
-        if stack and stack.valid_for_read and stack.spoil_percent > 0 then
-            local time_left = stack.spoil_tick - game.tick
-            
-            -- Set the new spoil tick to: Current Time + (Remaining Time + Interval)
-            -- math.min ensures we never exceed the item's maximum possible freshness
-            stack.spoil_tick = game.tick + math.min(stack.prototype.get_spoil_ticks(stack.quality), time_left + TICK_INTERVAL)
-        end
+-- Core Logic: Resets the spoilage timer for all items in a given inventory
+-- The stacks in inventory (Cargo Bay/Hub) to process
+local function freeze_active_list(inventory) 
+    for i = 1, #inventory do
+        freeze_stack(inventory[i])
     end
 end
 
 --- @param inventory LuaInventory?
+-- Returns all the Item stacks in the inventory which are spoilable
 local function spoilable_counting(inventory)
-    local active_slots = 0
+    local active_slots = {}
 
     if not inventory or not inventory.valid then return 0 end
 
@@ -91,7 +87,7 @@ local function spoilable_counting(inventory)
         -- spoil_percent > 0: item is actually capable of spoiling
 
         if stack and stack.valid_for_read and stack.spoil_percent > 0 then
-            active_slots = active_slots + 1
+            active_slots[#active_slots + 1] = stack
         end
     end
 
@@ -100,7 +96,7 @@ end
 
 
 tech_flag = (settings.startup["technology-required"].value == "none")
-
+-- Main loop function
 --- @param force LuaForce?
 local function process_space_platforms(force)
 
@@ -115,22 +111,24 @@ local function process_space_platforms(force)
             local inv_main = hub.get_inventory(defines.inventory.hub_main)
             local inv_trash = hub.get_inventory(defines.inventory.hub_trash)
             
-            local spoilable_count = 0
-            if inv_main then spoilable_count = spoilable_count + spoilable_counting(inv_main) end
-            if inv_trash then spoilable_count = spoilable_count + spoilable_counting(inv_trash) end
+            -- 2. Get all the item stacks which are spoilable from both invertories
+            spoilable_list_inv_main = spoilable_counting(inv_main)
+            spoilable_list_inv_trash = spoilable_counting(inv_trash)
 
+            -- 3. Update the power drain dynamically
+            local spoilable_count = 0
+            spoilable_count = #spoilable_list_inv_main + #spoilable_list_inv_trash
             
-            -- 2. Update the power drain dynamically
             power_consumption = (spoilable_count * POWER_PER_SLOT) / 60 
             interface.power_usage = power_consumption
             interface.input_flow_limit = power_consumption
             interface.electric_buffer_size = power_consumption*1.1
 
-            -- 3. Check if we have enough energy in the buffer
+            -- 4. Check if we have enough energy in the buffer
             -- If the buffer is empty, the platform is out of power
             if interface.energy >= (interface.power_usage) then
-                freeze_inventory(inv_main)
-                freeze_inventory(inv_trash)
+                freeze_active_list(spoilable_list_inv_main)
+                freeze_active_list(spoilable_list_inv_trash)
             end
 
             ::continue::

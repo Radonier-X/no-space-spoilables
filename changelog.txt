@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.4
+Date: 28. 06. 2026
+  Optimizations:
+    - Made the update loop faster. Now suppports much lower tick speeds consistently 
+---------------------------------------------------------------------------------------------------
 Version: 1.0.3
 Date: 27. 06. 2026
   Bugfixes:
