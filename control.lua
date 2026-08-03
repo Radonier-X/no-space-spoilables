@@ -2,10 +2,12 @@
 
 script.on_init(function()
     storage.platform_interfaces = storage.platform_interfaces or {}
+    storage.platform_settings = storage.platform_settings or {}
 end)
 
 script.on_configuration_changed(function()
     storage.platform_interfaces = storage.platform_interfaces or {}
+    storage.platform_settings = storage.platform_settings or {}
 end)
 
 --#endregion
@@ -14,12 +16,13 @@ end)
 
 -- Configuration:
 -- Frequency of the "freeze" pulse
-local TICK_INTERVAL = settings.startup["spoil-update-tick-interval"].value
-local INTERFACE_NAME = "space-refrigeration-interface"
-local POWER_PER_SLOT = settings.startup["power-per-stack"].value
-local BASE_POWER_USAGE = 50000
+local TICK_INTERVAL = settings.startup["nss-spoil-update-tick-interval"].value
+local INTERFACE_NAME = "nss-space-refrigeration-interface"
+local POWER_PER_SLOT = settings.startup["nss-power-per-stack"].value
+local TECH_FLAG = (settings.startup["nss-technology-required"].value == "none")
 
 -- Creates the interface on the surface of the platform and caches it for future uses
+---@param platform LuaSpacePlatform
 local function get_or_create_interface(platform)
     local platform_index = platform.index
     local cached_entity = storage.platform_interfaces[platform_index]
@@ -43,6 +46,7 @@ local function get_or_create_interface(platform)
 
     -- Creates the interface for the platfrom if it doesn't exist
     if not interface then
+        ---@diagnostic disable-next-line: cast-local-type
         interface = surface.create_entity{
             name = INTERFACE_NAME,
             position = hub.position,
@@ -56,6 +60,57 @@ local function get_or_create_interface(platform)
     -- Save to cache for next time
     storage.platform_interfaces[platform_index] = interface
     return interface
+end
+
+-- Gets the interface (only if it exists)
+---@param platform LuaSpacePlatform
+local function get_interface(platform)
+    local platform_index = platform.index
+    local cached_entity = storage.platform_interfaces[platform_index]
+
+    -- If cached and still valid, return it immediately
+    if cached_entity and cached_entity.valid then
+        return cached_entity
+    else
+        return nil
+    end
+end
+
+-- Removes the interface from a platform
+---@param platform LuaSpacePlatform
+local function remove_interface(platform)
+    local interface = get_interface(platform)
+    if not nil and interface.valid then
+        interface.destroy()
+        storage.platform_interfaces[platform.index]=nil
+    end
+end
+
+-- Resets the power useage of the platform
+---@param platform LuaSpacePlatform
+local function reset_power_interface(platform)
+    local interface = get_interface(platform)
+    interface.power_usage = 0
+    interface.input_flow_limit = 0
+    interface.electric_buffer_size = 0
+end
+
+-- Returns whether refrigeration is manually enabled for a platform (defaults to true)
+---@param platform LuaSpacePlatform
+local function is_interface_enabled(platform)
+    local settings = storage.platform_settings[platform.index]
+    if settings == nil or settings.enabled == nil then
+        return true -- default on
+    end
+    return settings.enabled
+end
+
+-- Sets the manual toggle state for a platform
+---@param platform LuaSpacePlatform
+---@param enabled boolean
+local function set_interface_state(platform, enabled)
+    storage.platform_settings[platform.index] = storage.platform_settings[platform.index] or {}
+    storage.platform_settings[platform.index].enabled = enabled
 end
 
 -- Resets the time for the stack
@@ -73,8 +128,8 @@ local function freeze_active_list(inventory)
     end
 end
 
---- @param inventory LuaInventory?
 -- Returns all the Item stacks in the inventory which are spoilable
+--- @param inventory LuaInventory?
 local function spoilable_counting(inventory)
     local active_slots = {}
 
@@ -94,8 +149,14 @@ local function spoilable_counting(inventory)
     return active_slots
 end
 
+-- Shared with the main loop's gating logic
+---@param force LuaForce
+local function tech_researched(force)
+    if TECH_FLAG then return true end
+    local tech = force.technologies["nss-space-platfrom-refrigeration"]
+    return tech and tech.researched or false
+end
 
-tech_flag = (settings.startup["technology-required"].value == "none")
 -- Main loop function
 --- @param force LuaForce?
 local function process_space_platforms(force)
@@ -106,6 +167,11 @@ local function process_space_platforms(force)
         if hub and hub.valid then
             local interface = get_or_create_interface(platform)
             if not interface then goto continue end
+
+            if not is_interface_enabled(platform) then
+                reset_power_interface(platform) -- stop draining power while disabled
+                goto continue
+            end
 
             -- 1. Calculate the 'Cost' based on previous tick's inventory
             local inv_main = hub.get_inventory(defines.inventory.hub_main)
@@ -144,14 +210,77 @@ end
 -- Register the logic to run every nth tick
 script.on_nth_tick(TICK_INTERVAL, function ()
     for _, force in pairs(game.forces) do
-        if tech_flag then
+        if TECH_FLAG then
             process_space_platforms(force)
-        else 
-            if force.technologies["space-platfrom-refrigeration"].researched then 
+        else if (force.technologies["nss-space-platfrom-refrigeration"].researched) then 
                 process_space_platforms(force)
             end
         end
     end
+end)
+
+
+--#endregion
+
+--#region GUI
+
+local TOGGLE_FRAME_NAME = "nss-space-refrigeration-toggle-frame"
+local TOGGLE_SWITCH_NAME = "nss-space-refrigeration-toggle-switch"
+
+script.on_event(defines.events.on_gui_opened, function(event)
+    local entity = event.entity
+    if not (entity and entity.valid and entity.type == "space-platform-hub") then return end
+
+    local platform = entity.surface.platform
+    if not platform then return end
+
+    local player = game.get_player(event.player_index)
+    if not player then return end
+
+    if player.gui.relative[TOGGLE_FRAME_NAME] then
+        player.gui.relative[TOGGLE_FRAME_NAME].destroy()
+    end
+
+    if not tech_researched(entity.force) then
+
+        return
+    end
+
+    local frame = player.gui.relative.add{
+        type = "frame",
+        name = TOGGLE_FRAME_NAME,
+        caption = {"gui-nss-space-refrigeration.frame-title"},
+        direction = "vertical",
+        anchor = {
+            gui = defines.relative_gui_type.space_platform_hub_gui,
+            position = defines.relative_gui_position.left
+        }
+    }
+
+    frame.add{
+        type = "switch",
+        name = TOGGLE_SWITCH_NAME,
+        switch_state = is_interface_enabled(platform) and "right" or "left",
+        left_label_caption = {"gui-nss-space-refrigeration.switch-off"},
+        right_label_caption = {"gui-nss-space-refrigeration.switch-on"}
+    }
+end)
+
+script.on_event(defines.events.on_gui_switch_state_changed, function(event)
+    if event.element.name ~= TOGGLE_SWITCH_NAME then return end
+
+    local player = game.get_player(event.player_index)
+    if not player then return end
+
+    local entity = player.opened
+    if not (entity and entity.valid and entity.object_name == "LuaEntity" and entity.type == "space-platform-hub") then
+        return
+    end
+
+    local platform = entity.surface.platform
+    if not platform then return end
+
+    set_interface_state(platform, event.element.switch_state == "right")
 end)
 
 --#endregion

@@ -1,7 +1,7 @@
 data:extend({
     {
         type = "int-setting",
-        name = "spoil-update-tick-interval",
+        name = "nss-spoil-update-tick-interval",
         setting_type = "startup",
         default_value = 300,
         minimum_value = 1,
@@ -10,7 +10,7 @@ data:extend({
     },
     {
         type = "double-setting",
-        name = "power-per-stack",
+        name = "nss-power-per-stack",
         setting_type = "startup",
         default_value = 50000,
         minimum_value = 0,
@@ -18,7 +18,7 @@ data:extend({
     },
     {
         type = "string-setting",
-        name = "technology-required",
+        name = "nss-technology-required",
         setting_type = "startup",
         allowed_values = {"none","space-platform","agricultural-science-pack","cryogenic-science-pack"},
         default_value = "none",

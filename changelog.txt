@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.5
+Date: 03. 08. 2026
+  Major Features:
+    - Added a manual platform specific toggle for space refrigeration  
+  Modding:
+    - Renamed and prefixed all settings and entites to prevent future naming conflicts
+---------------------------------------------------------------------------------------------------
 Version: 1.0.4
 Date: 28. 06. 2026
   Optimizations:

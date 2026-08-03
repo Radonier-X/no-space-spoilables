@@ -1,5 +1,7 @@
 local BASE_POWER_USAGE = "50kW" -- Minimum power to keep the system "on"
-local PREREQUISITE_TECH = settings.startup["technology-required"].value
+local PREREQUISITE_TECH = settings.startup["nss-technology-required"].value
+
+
 local RESEARCH_REQUIREMENT_LIST = 
 {
   ["space-platform"] = {
@@ -56,7 +58,7 @@ end
 data:extend({
   {
   type = "technology",
-  name = "space-platfrom-refrigeration",
+  name = "nss-space-platfrom-refrigeration",
   icon = "__no-space-spoilables__/graphics/space-platform-freezing.png",
   icon_size = 256,
 ---@diagnostic disable-next-line: assign-type-mismatch
@@ -70,7 +72,7 @@ data:extend({
 data:extend({
   {
     type = "electric-energy-interface",
-    name = "space-refrigeration-interface",
+    name = "nss-space-refrigeration-interface",
     icon = "__no-space-spoilables__/graphics/space-platform-freezing-icon.png",
     icon_size = 256,
     flags = { "not-blueprintable", "not-deconstructable", "placeable-off-grid"},

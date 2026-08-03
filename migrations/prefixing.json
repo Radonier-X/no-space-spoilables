@@ -1,0 +1,8 @@
+{
+    "entity" : [ 
+        ["space-refrigeration-interface", "nss-space-refrigeration-interface"] 
+    ],
+    "technology": [
+        ["space-platfrom-refrigeration", "nss-space-platfrom-refrigeration"]
+    ]
+}
